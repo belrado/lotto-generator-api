@@ -1,4 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import puppeteer from 'puppeteer';
 import cheerio from 'cheerio';
@@ -6,7 +10,7 @@ import axios from 'axios';
 import { StoreRowStatus, WinNumberInfoStatus, WinNumberStatus } from './type';
 import { InjectRepository } from '@nestjs/typeorm';
 import { WinNumberEntity } from '../api/entities/winNumber.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { WinnerInfoEntity } from '../api/entities/winnerInfo.entity';
 import { WinStoreEntity } from '../api/entities/winStore.entity';
 
@@ -19,6 +23,7 @@ export class BatchService {
     private winnerInfoRepository: Repository<WinnerInfoEntity>,
     @InjectRepository(WinStoreEntity)
     private winStoreRepository: Repository<WinStoreEntity>,
+    private dataSource: DataSource,
   ) {}
 
   private readonly logger = new Logger(BatchService.name);
@@ -28,11 +33,7 @@ export class BatchService {
     //await this.lottoCrawling();
   }
 
-  private async puppeteerInit(url: string): Promise<string> {
-    const browser = await puppeteer.launch({
-      headless: false,
-    });
-
+  private async puppeteerInit(url: string, browser): Promise<string> {
     const page = await browser.newPage();
     await page.goto(url, {
       waitUntil: 'networkidle2',
@@ -61,18 +62,52 @@ export class BatchService {
     return storeData;
   }
 
+  private async insertInNumber(winNumber, queryRunner) {
+    return await this.winNumberRepository
+      .createQueryBuilder('winNumber', queryRunner)
+      .insert()
+      .into(WinNumberEntity)
+      .values([winNumber])
+      .execute();
+  }
+
+  private async inertWinnerInfo(winNumberInfo, queryRunner) {
+    return await this.winnerInfoRepository
+      .createQueryBuilder('winnerInfo', queryRunner)
+      .insert()
+      .into(WinnerInfoEntity)
+      .values([...winNumberInfo])
+      .execute();
+  }
+
+  private async insertWinStore(winStore, queryRunner) {
+    return await this.winnerInfoRepository
+      .createQueryBuilder('winStore', queryRunner)
+      .insert()
+      .into(WinStoreEntity)
+      .values([...winStore])
+      .execute();
+  }
+
   async lottoCrawling(drwNo: string) {
     const data = await axios.get(
-      'https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=' +
-        drwNo,
+      `https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=${drwNo}`,
     );
 
     if (data.data && data.data.returnValue === 'success') {
-      const winNumber: WinNumberStatus = data.data;
+      const winNumber = data.data;
 
       const url = `https://dhlottery.co.kr/gameResult.do?method=byWin&drwNo=${drwNo}`;
 
-      const content = await this.puppeteerInit(url);
+      const browser = await puppeteer.launch({
+        headless: false,
+      });
+      const page = await browser.newPage();
+      await page.goto(url, {
+        waitUntil: 'networkidle2',
+      });
+
+      const content = await page.content();
       const $ = cheerio.load(content);
 
       const lists = $('.content_winnum_645 > table > tbody > tr');
@@ -91,8 +126,8 @@ export class BatchService {
         };
         const key: string[] = [
           'level',
-          'winUsers',
           'winTotAmnt',
+          'winUsers',
           'winAmnt',
           'continue',
           'winTypeText',
@@ -118,15 +153,44 @@ export class BatchService {
         winNumberInfo.push(row);
       });
 
-      console.log(winNumber, winNumberInfo);
+      await browser.close();
 
-      await this.storeCrawling(drwNo);
+      const winStore = await this.storeCrawling(drwNo);
+
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      try {
+        await this.insertInNumber(winNumber, queryRunner);
+        await this.inertWinnerInfo(winNumberInfo, queryRunner);
+        if (winStore.length > 0) {
+          await this.insertWinStore(winStore, queryRunner);
+        }
+
+        await queryRunner.commitTransaction();
+      } catch (e) {
+        console.log(e);
+        await queryRunner.rollbackTransaction();
+      } finally {
+        await queryRunner.release();
+      }
     }
   }
 
-  async storeCrawling(drwNo: string) {
+  async storeCrawling(drwNo: string): Promise<object[]> {
     const crawlingUrl = `https://dhlottery.co.kr/store.do?method=topStore&pageGubun=L645&drwNo=${drwNo}`;
-    const content = await this.puppeteerInit(crawlingUrl);
+
+    const browser = await puppeteer.launch({
+      headless: false,
+    });
+    const page = await browser.newPage();
+    await page.goto(crawlingUrl, {
+      waitUntil: 'networkidle2',
+    });
+
+    const content = await page.content();
+
     const $ = cheerio.load(content);
 
     const first = $('.group_content').eq(0).find('table > tbody > tr');
@@ -142,6 +206,9 @@ export class BatchService {
     );
 
     const pageListNum = $('#page_box > a').length;
+
+    await browser.close();
+
     if (pageListNum > 1) {
       for (let i = 1; i <= pageListNum; i++) {
         const more = await this.secondStoreMoreCrawling(drwNo, i.toString());
@@ -149,8 +216,28 @@ export class BatchService {
       }
     }
 
-    console.log('1등 상점', firstStore);
-    console.log('2등 상점', secondStore);
+    const clearFirstStore = firstStore.filter(
+      (v: StoreRowStatus) => v.name !== '',
+    );
+    const newFirst = clearFirstStore.map((v: StoreRowStatus) => ({
+      drwNo: drwNo,
+      level: 1,
+      name: v.name,
+      address: v.address,
+      type: v.type,
+    }));
+    const clearSecondStore = secondStore.filter(
+      (v: StoreRowStatus) => v.name !== '',
+    );
+    const newSecond = clearSecondStore.map((v: StoreRowStatus) => ({
+      drwNo: drwNo,
+      level: 2,
+      name: v.name,
+      address: v.address,
+      type: v.type,
+    }));
+
+    return newFirst.concat(newSecond);
   }
 
   async secondStoreMoreCrawling(
@@ -158,7 +245,17 @@ export class BatchService {
     pageNo: string,
   ): Promise<object[]> {
     const crawlingUrl = `https://dhlottery.co.kr/store.do?method=topStore&pageGubun=L645&drwNo=${drwNo}&nowPage=${pageNo}`;
-    const content = await this.puppeteerInit(crawlingUrl);
+
+    const browser = await puppeteer.launch({
+      headless: false,
+    });
+    const page = await browser.newPage();
+    await page.goto(crawlingUrl, {
+      waitUntil: 'networkidle2',
+    });
+
+    const content = await page.content();
+
     const $ = cheerio.load(content);
 
     const lists = $('.group_content').eq(1).find('table > tbody > tr');
@@ -167,6 +264,8 @@ export class BatchService {
     secondStore.push(
       ...this.storeDataInit(lists, $, ['continue', 'name', 'address']),
     );
+
+    await browser.close();
 
     return secondStore;
   }

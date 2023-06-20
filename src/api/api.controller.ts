@@ -9,7 +9,6 @@ import {
 } from '@nestjs/common';
 import { ApiService } from './api.service';
 import { CreateApiDto } from './dto/create-api.dto';
-import { UpdateApiDto } from './dto/update-api.dto';
 import { CrawlingManualDto } from './dto/crawling-manual.dto';
 
 @Controller('api/lotto')

@@ -13,25 +13,25 @@ export class WinNumberEntity {
   drwNoDate: string;
 
   @Column()
-  drwNo1: number;
+  drwtNo1: number;
 
   @Column()
-  drwNo2: number;
+  drwtNo2: number;
 
   @Column()
-  drwNo3: number;
+  drwtNo3: number;
 
   @Column()
-  drwNo4: number;
+  drwtNo4: number;
 
   @Column()
-  drwNo5: number;
+  drwtNo5: number;
 
   @Column()
-  drwNo6: number;
+  drwtNo6: number;
 
   @Column()
-  bonusNo: number;
+  bnusNo: number;
 
   @Column()
   totSellamnt: number;

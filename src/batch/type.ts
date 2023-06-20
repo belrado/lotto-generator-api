@@ -1,4 +1,6 @@
 export interface StoreRowStatus {
+  drwNo?: string;
+  level?: string;
   name: string;
   type: string;
   address: string;

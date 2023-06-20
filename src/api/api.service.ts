@@ -31,9 +31,9 @@ export class ApiService {
 
   async lottoWinInfoCrawling(drwNo: string) {
     try {
-      await this.batchService.lottoCrawling(drwNo);
-      for (let i = 1; i < 10; i++) {
-        // await this.batchService.lottoCrawling(i.toString());
+      //await this.batchService.lottoCrawling(drwNo);
+      for (let i = 100; i < 200; i++) {
+        await this.batchService.lottoCrawling(i.toString());
       }
     } catch (e) {}
   }
