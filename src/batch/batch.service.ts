@@ -104,6 +104,7 @@ export class BatchService {
       try {
         const browser = await puppeteer.launch({
           headless: false,
+          args: ['--no-sandbox', '--disable-setuid-sandbox'],
         });
         const page = await browser.newPage();
         await page.goto(url, {
@@ -189,6 +190,7 @@ export class BatchService {
 
     const browser = await puppeteer.launch({
       headless: false,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
     const page = await browser.newPage();
     await page.goto(crawlingUrl, {
@@ -254,6 +256,7 @@ export class BatchService {
 
     const browser = await puppeteer.launch({
       headless: false,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
     const page = await browser.newPage();
     await page.goto(crawlingUrl, {
