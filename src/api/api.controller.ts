@@ -43,7 +43,11 @@ export class ApiController {
   @Post('/manual')
   async crawling(@Body() dto: CrawlingManualDto): Promise<object> {
     const { drwNo } = dto;
-    await this.apiService.lottoWinInfoCrawling(drwNo);
-    return { response: 'success' };
+    try {
+      await this.apiService.lottoWinInfoCrawling(drwNo);
+      return { status: 'success' };
+    } catch (e) {
+      return { status: 'error', message: e.message };
+    }
   }
 }

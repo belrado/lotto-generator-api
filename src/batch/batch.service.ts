@@ -173,9 +173,11 @@ export class BatchService {
           }
 
           await queryRunner.commitTransaction();
+          console.log('data insert success');
         } catch (e) {
           console.log(e);
           await queryRunner.rollbackTransaction();
+          console.log('data insert error rollback');
         } finally {
           await queryRunner.release();
         }
