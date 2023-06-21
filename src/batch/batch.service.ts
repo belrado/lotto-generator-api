@@ -103,7 +103,7 @@ export class BatchService {
 
       try {
         const browser = await puppeteer.launch({
-          headless: 'new',
+          headless: true,
           args: ['--no-sandbox', '--disable-setuid-sandbox'],
         });
         const page = await browser.newPage();
@@ -191,7 +191,7 @@ export class BatchService {
     const crawlingUrl = `https://dhlottery.co.kr/store.do?method=topStore&pageGubun=L645&drwNo=${drwNo}`;
 
     const browser = await puppeteer.launch({
-      headless: 'new',
+      headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
     const page = await browser.newPage();
@@ -257,7 +257,7 @@ export class BatchService {
     const crawlingUrl = `https://dhlottery.co.kr/store.do?method=topStore&pageGubun=L645&drwNo=${drwNo}&nowPage=${pageNo}`;
 
     const browser = await puppeteer.launch({
-      headless: 'new',
+      headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
     const page = await browser.newPage();
