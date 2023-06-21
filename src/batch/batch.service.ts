@@ -97,83 +97,89 @@ export class BatchService {
     if (data.data && data.data.returnValue === 'success') {
       const winNumber = data.data;
 
+      console.log(winNumber);
+
       const url = `https://dhlottery.co.kr/gameResult.do?method=byWin&drwNo=${drwNo}`;
 
-      const browser = await puppeteer.launch({
-        headless: false,
-      });
-      const page = await browser.newPage();
-      await page.goto(url, {
-        waitUntil: 'networkidle2',
-      });
-
-      const content = await page.content();
-      const $ = cheerio.load(content);
-
-      const lists = $('.content_winnum_645 > table > tbody > tr');
-
-      const winNumberInfo: object[] = [];
-
-      lists.each(function () {
-        const line = $(this).find('td');
-        const row: WinNumberInfoStatus = {
-          drwNo: drwNo,
-          level: '',
-          winUsers: '',
-          winTotAmnt: '',
-          winAmnt: '',
-          winTypeText: '',
-        };
-        const key: string[] = [
-          'level',
-          'winTotAmnt',
-          'winUsers',
-          'winAmnt',
-          'continue',
-          'winTypeText',
-        ];
-
-        for (let i = 0; i < key.length; i++) {
-          if (key[i] === 'continue') continue;
-          if (key[i] === 'winTypeText') {
-            row[key[i]] = line
-              .eq(i)
-              .text()
-              .replace(/\s/gi, '')
-              .replace(/1등/gi, '');
-          } else {
-            row[key[i]] = line
-              .eq(i)
-              .text()
-              .replace(/\s/gi, '')
-              .replace(/,|원|등/gi, '');
-          }
-        }
-
-        winNumberInfo.push(row);
-      });
-
-      await browser.close();
-
-      const winStore = await this.storeCrawling(drwNo);
-
-      const queryRunner = this.dataSource.createQueryRunner();
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
-
       try {
-        await this.insertInNumber(winNumber, queryRunner);
-        await this.inertWinnerInfo(winNumberInfo, queryRunner);
-        if (winStore.length > 0) {
-          await this.insertWinStore(winStore, queryRunner);
-        }
+        const browser = await puppeteer.launch({
+          headless: false,
+        });
+        const page = await browser.newPage();
+        await page.goto(url, {
+          waitUntil: 'networkidle2',
+        });
 
-        await queryRunner.commitTransaction();
+        const content = await page.content();
+        const $ = cheerio.load(content);
+
+        const lists = $('.content_winnum_645 > table > tbody > tr');
+
+        const winNumberInfo: object[] = [];
+
+        lists.each(function () {
+          const line = $(this).find('td');
+          const row: WinNumberInfoStatus = {
+            drwNo: drwNo,
+            level: '',
+            winUsers: '',
+            winTotAmnt: '',
+            winAmnt: '',
+            winTypeText: '',
+          };
+          const key: string[] = [
+            'level',
+            'winTotAmnt',
+            'winUsers',
+            'winAmnt',
+            'continue',
+            'winTypeText',
+          ];
+
+          for (let i = 0; i < key.length; i++) {
+            if (key[i] === 'continue') continue;
+            if (key[i] === 'winTypeText') {
+              row[key[i]] = line
+                .eq(i)
+                .text()
+                .replace(/\s/gi, '')
+                .replace(/1등/gi, '');
+            } else {
+              row[key[i]] = line
+                .eq(i)
+                .text()
+                .replace(/\s/gi, '')
+                .replace(/,|원|등/gi, '');
+            }
+          }
+
+          winNumberInfo.push(row);
+        });
+
+        await browser.close();
+
+        const winStore = await this.storeCrawling(drwNo);
+
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+
+        try {
+          await this.insertInNumber(winNumber, queryRunner);
+          await this.inertWinnerInfo(winNumberInfo, queryRunner);
+          if (winStore.length > 0) {
+            await this.insertWinStore(winStore, queryRunner);
+          }
+
+          await queryRunner.commitTransaction();
+        } catch (e) {
+          console.log(e);
+          await queryRunner.rollbackTransaction();
+        } finally {
+          await queryRunner.release();
+        }
       } catch (e) {
-        console.log(e);
-        await queryRunner.rollbackTransaction();
-      } finally {
-        await queryRunner.release();
+        console.log('error', e);
       }
     }
   }
