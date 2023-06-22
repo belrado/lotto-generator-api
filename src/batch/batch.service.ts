@@ -97,7 +97,7 @@ export class BatchService {
     if (data.data && data.data.returnValue === 'success') {
       const winNumber = data.data;
 
-      console.log(winNumber);
+      console.log(`= ${drwNo} = start Crawling =====================`);
 
       const url = `https://dhlottery.co.kr/gameResult.do?method=byWin&drwNo=${drwNo}`;
 
@@ -180,6 +180,7 @@ export class BatchService {
           console.log('data insert error rollback');
         } finally {
           await queryRunner.release();
+          console.log(`= ${drwNo} = end Crawling =====================`);
         }
       } catch (e) {
         console.log('error', e);
@@ -235,6 +236,8 @@ export class BatchService {
       name: v.name,
       address: v.address,
       type: v.type,
+      latitude: '',
+      longitude: '',
     }));
     const clearSecondStore = secondStore.filter(
       (v: StoreRowStatus) => v.name !== '',
@@ -245,6 +248,8 @@ export class BatchService {
       name: v.name,
       address: v.address,
       type: v.type,
+      latitude: '',
+      longitude: '',
     }));
 
     return newFirst.concat(newSecond);

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ApiModule } from './api/api.module';
 import { BatchModule } from './batch/batch.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -7,6 +7,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { WinStoreEntity } from './api/entities/winStore.entity';
 import { WinNumberEntity } from './api/entities/winNumber.entity';
 import { WinnerInfoEntity } from './api/entities/winnerInfo.entity';
+import {
+  utilities as nestWinstonModuleUtilities,
+  WinstonModule,
+} from 'nest-winston';
+import * as winston from 'winston';
+import { LoggerMiddleware } from './logger/logger.middleware';
 
 @Module({
   imports: [
@@ -34,8 +40,25 @@ import { WinnerInfoEntity } from './api/entities/winnerInfo.entity';
         synchronize: false,
       }),
     }),
+    WinstonModule.forRoot({
+      transports: [
+        new winston.transports.Console({
+          level: process.env.NODE_ENV === 'production' ? 'info' : 'silly',
+          format: winston.format.combine(
+            winston.format.timestamp(),
+            nestWinstonModuleUtilities.format.nestLike('MyApp', {
+              prettyPrint: true,
+            }),
+          ),
+        }),
+      ],
+    }),
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): any {
+    consumer.apply(LoggerMiddleware).forRoutes('/api');
+  }
+}
