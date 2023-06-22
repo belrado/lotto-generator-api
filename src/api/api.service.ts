@@ -44,7 +44,7 @@ export class ApiService {
       throw new NotFoundException('해당 회차는 이미 등록되어있습니다.');
     }
     //await this.batchService.lottoCrawling(drwNo.toString());
-    for (let i = 700; i < 1073; i++) {
+    for (let i = 826; i < 1073; i++) {
       await this.batchService.lottoCrawling(i.toString());
     }
   }
