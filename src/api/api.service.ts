@@ -5,12 +5,18 @@ import { BatchService } from '../batch/batch.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { WinNumberEntity } from './entities/winNumber.entity';
 import { Repository } from 'typeorm';
+import { WinStoreEntity } from './entities/winStore.entity';
+import { WinnerInfoEntity } from './entities/winnerInfo.entity';
 
 @Injectable()
 export class ApiService {
   constructor(
     @InjectRepository(WinNumberEntity)
     private winNumberRepository: Repository<WinNumberEntity>,
+    @InjectRepository(WinStoreEntity)
+    private winStoreRepository: Repository<WinStoreEntity>,
+    @InjectRepository(WinnerInfoEntity)
+    private winnerInfoRepository: Repository<WinnerInfoEntity>,
     private batchService: BatchService,
   ) {}
 
@@ -18,7 +24,17 @@ export class ApiService {
     return 'This action adds a new api';
   }
 
-  findAll() {
+  async findAll() {
+    const allNumber = await this.winNumberRepository.find();
+    const allStore = await this.winStoreRepository.find();
+    const allInfo = await this.winnerInfoRepository.find();
+    const allData = {
+      number: allNumber,
+      store: allStore,
+      info: allInfo,
+    };
+    return allData;
+
     return `This action returns all api`;
   }
 

@@ -22,6 +22,7 @@ export class ApiController {
 
   @Get()
   findAll() {
+    //return { response: 'success' };
     return this.apiService.findAll();
   }
   /*
