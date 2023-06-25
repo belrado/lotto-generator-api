@@ -12,6 +12,7 @@ async function bootstrap() {
   );
 
   await app.use(compression());
+  app.enableCors();
   await app.listen(3000);
 }
 bootstrap();
