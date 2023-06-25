@@ -10,6 +10,7 @@ import {
 import { ApiService } from './api.service';
 import { CreateApiDto } from './dto/create-api.dto';
 import { CrawlingManualDto } from './dto/crawling-manual.dto';
+import axios from 'axios';
 
 @Controller('api/lotto')
 export class ApiController {
@@ -21,9 +22,26 @@ export class ApiController {
   }
 
   @Get()
-  findAll() {
+  async findAll() {
     //return { response: 'success' };
-    return this.apiService.findAll();
+    try {
+      const allData = await this.apiService.findAll();
+      console.log(allData);
+      return { response: 'good' };
+    } catch (e) {
+      return { error: e };
+    }
+  }
+
+  @Get('/test')
+  async test() {
+    try {
+      const allData = await axios.get('http://belrado.com/api/lotto');
+      console.log(allData);
+      return { response: 'good' };
+    } catch (e) {
+      return { error: e };
+    }
   }
   /*
   @Get('/:id')
