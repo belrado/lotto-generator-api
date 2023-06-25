@@ -25,9 +25,7 @@ export class ApiController {
   async findAll() {
     //return { response: 'success' };
     try {
-      const allData = await this.apiService.findAll();
-      console.log(allData);
-      return { response: 'good' };
+      return await this.apiService.findAll();
     } catch (e) {
       return { error: e };
     }
