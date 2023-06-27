@@ -16,5 +16,11 @@ async function bootstrap() {
   await app.use(compression());
   app.enableCors();
   await app.listen(3000);
+
+  process.on('SIGINT', function () {
+    app.close().then(() => {
+      process.exit(0);
+    });
+  });
 }
 bootstrap();
