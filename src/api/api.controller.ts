@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiService } from './api.service';
 import { CreateApiDto } from './dto/create-api.dto';
@@ -31,14 +32,14 @@ export class ApiController {
     }
   }
 
-  @Get('/test')
-  async test() {
-    try {
-      const allData = await axios.get('http://belrado.com/api/lotto');
-      console.log(allData);
-      return { response: 'good' };
-    } catch (e) {
-      return { error: e };
+  @Get('/:drwNo')
+  async findOne(@Param('drwNo') drwNo: number) {
+    console.log(drwNo);
+    const lotto = await this.apiService.findOne(drwNo);
+    if (lotto) {
+      return lotto;
+    } else {
+      throw new Error('ddddd');
     }
   }
   /*

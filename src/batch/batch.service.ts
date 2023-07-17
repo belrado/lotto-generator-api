@@ -2,6 +2,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import puppeteer from 'puppeteer';
@@ -31,6 +32,7 @@ export class BatchService {
   @Cron('45 * * * * *')
   async handleCron() {
     //await this.lottoCrawling();
+    console.log('batch');
   }
 
   private async puppeteerInit(url: string, browser): Promise<string> {
@@ -185,6 +187,8 @@ export class BatchService {
       } catch (e) {
         console.log('error', e);
       }
+    } else {
+      throw new NotFoundException('회차정보를 불러오지 못했습니다.');
     }
   }
 

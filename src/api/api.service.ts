@@ -38,8 +38,10 @@ export class ApiService {
     return `This action returns all api`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} api`;
+  async findOne(drwNo: number) {
+    return await this.winNumberRepository.findOne({
+      where: { drwNo },
+    });
   }
 
   update(id: number, updateApiDto: UpdateApiDto) {
@@ -53,9 +55,7 @@ export class ApiService {
   /////////////-----------
 
   async lottoWinInfoCrawling(drwNo: number) {
-    const check = await this.winNumberRepository.findOne({
-      where: { drwNo },
-    });
+    const check = this.findOne(drwNo);
     if (check) {
       throw new NotFoundException('해당 회차는 이미 등록되어있습니다.');
     }
