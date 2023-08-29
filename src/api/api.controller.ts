@@ -39,7 +39,10 @@ export class ApiController {
     if (lotto) {
       return lotto;
     } else {
-      throw new Error('ddddd');
+      return {
+        status: 'error',
+        message: drwNo + ' 회차 정보가 업데이트 되지않았습니다.',
+      };
     }
   }
   /*
