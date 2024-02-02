@@ -55,7 +55,7 @@ export class ApiService {
   /////////////-----------
 
   async lottoWinInfoCrawling(drwNo: number) {
-    const check = this.findOne(drwNo);
+    const check = await this.findOne(drwNo);
     if (check) {
       throw new NotFoundException('해당 회차는 이미 등록되어있습니다?.');
     }

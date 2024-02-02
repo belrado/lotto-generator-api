@@ -34,9 +34,10 @@ export class ApiController {
 
   @Get('/:drwNo')
   async findOne(@Param('drwNo') drwNo: number) {
-    console.log(drwNo);
+    console.log('drwNo', drwNo);
     const lotto = await this.apiService.findOne(drwNo);
     if (lotto) {
+      //console.log(lotto);
       return lotto;
     } else {
       return {

@@ -29,10 +29,17 @@ export class BatchService {
 
   private readonly logger = new Logger(BatchService.name);
 
-  @Cron('45 * * * * *')
+  @Cron('0 */40 20-21 * * 6')
   async handleCron() {
-    //await this.lottoCrawling();
-    console.log('batch');
+    const dbLastData: WinNumberEntity[] = await this.winNumberRepository.find({
+      select: { drwNo: true },
+      order: { drwNo: 'desc' },
+      take: 1,
+    });
+    const lastDrwNo = await this.getLottoLastDrwNo();
+    for (let i = dbLastData[0].drwNo + 1; i <= lastDrwNo; i++) {
+      await this.lottoCrawling(i.toString());
+    }
   }
 
   private async puppeteerInit(url: string, browser): Promise<string> {
@@ -89,6 +96,29 @@ export class BatchService {
       .into(WinStoreEntity)
       .values([...winStore])
       .execute();
+  }
+
+  private async getLottoLastDrwNo() {
+    const url = `https://dhlottery.co.kr/gameResult.do?method=byWin`;
+    try {
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+      const page = await browser.newPage();
+      await page.goto(url, {
+        waitUntil: 'networkidle2',
+      });
+
+      const content = await page.content();
+      const $ = cheerio.load(content);
+      const drwNo = $('.content_winnum_645 > .win_result > h4 > strong');
+      await browser.close();
+
+      return parseInt(drwNo.text());
+    } catch (e) {
+      console.log('error', e);
+    }
   }
 
   async lottoCrawling(drwNo: string) {
