@@ -42,7 +42,7 @@ export class ApiController {
     } else {
       return {
         status: 'error',
-        message: drwNo + ' 회차 정보가 업데이트 되지않았습니다.',
+        message: drwNo + ' 회차 정보가 업데이트 되지않았습니다!!',
       };
     }
   }
