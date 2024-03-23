@@ -1,17 +1,8 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  NotFoundException,
-} from '@nestjs/common';
-import { ApiService } from './api.service';
-import { CreateApiDto } from './dto/create-api.dto';
-import { CrawlingManualDto } from './dto/crawling-manual.dto';
-import axios from 'axios';
+import { Controller, Get, Post, Body, Patch, Param, Delete, NotFoundException } from '@nestjs/common'
+import { ApiService } from './api.service'
+import { CreateApiDto } from './dto/create-api.dto'
+import { CrawlingManualDto } from './dto/crawling-manual.dto'
+import axios from 'axios'
 
 @Controller('api/lotto')
 export class ApiController {
@@ -19,31 +10,32 @@ export class ApiController {
 
   @Post()
   create(@Body() createApiDto: CreateApiDto) {
-    return this.apiService.create(createApiDto);
+    return this.apiService.create(createApiDto)
   }
 
   @Get()
   async findAll() {
     //return { response: 'success' };
     try {
-      return await this.apiService.findAll();
+      return await this.apiService.findAll()
     } catch (e) {
-      return { error: e };
+      return { error: e }
     }
   }
 
   @Get('/:drwNo')
   async findOne(@Param('drwNo') drwNo: number) {
-    console.log('drwNo', drwNo);
-    const lotto = await this.apiService.findOne(drwNo);
+    const lotto = await this.apiService.findOne(drwNo)
     if (lotto) {
-      //console.log(lotto);
-      return lotto;
+      return {
+        resultCode: '0000',
+        result: lotto
+      }
     } else {
       return {
-        status: 'error',
-        message: drwNo + ' 회차 정보가 업데이트 되지않았습니다!!',
-      };
+        resultCode: '0001',
+        message: drwNo + ' 회차 정보가 업데이트 되지않았습니다!!'
+      }
     }
   }
   /*
@@ -64,12 +56,12 @@ export class ApiController {
 
   @Post('/manual')
   async crawling(@Body() dto: CrawlingManualDto): Promise<object> {
-    const { drwNo } = dto;
+    const { drwNo } = dto
     try {
-      await this.apiService.lottoWinInfoCrawling(drwNo);
-      return { status: 'success' };
+      await this.apiService.lottoWinInfoCrawling(drwNo)
+      return { status: 'success' }
     } catch (e) {
-      return { status: 'error', message: e.message };
+      return { status: 'error', message: e.message }
     }
   }
 }
