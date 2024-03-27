@@ -1,8 +1,7 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, NotFoundException } from '@nestjs/common'
+import { Controller, Get, Post, Body, Param } from '@nestjs/common'
 import { ApiService } from './api.service'
 import { CreateApiDto } from './dto/create-api.dto'
 import { CrawlingManualDto } from './dto/crawling-manual.dto'
-import axios from 'axios'
 
 @Controller('api/lotto')
 export class ApiController {
@@ -54,14 +53,24 @@ export class ApiController {
     return this.apiService.remove(+id);
   }*/
 
-  @Post('/manual')
+  /*@Post('/manual')
   async crawling(@Body() dto: CrawlingManualDto): Promise<object> {
     const { drwNo } = dto
     try {
       await this.apiService.lottoWinInfoCrawling(drwNo)
-      return { status: 'success' }
+      return { status: 'success1' }
     } catch (e) {
       return { status: 'error', message: e.message }
     }
   }
+  @Post('/manual/store')
+  async crawlingStore(@Body() dto: CrawlingManualDto): Promise<object> {
+    const { drwNo } = dto
+    try {
+      const storeData = await this.apiService.lottoWinStoreCrawling(drwNo)
+      return { status: 'success2', storeData: JSON.stringify(storeData) }
+    } catch (e) {
+      return { status: 'error', message: e.message }
+    }
+  }*/
 }

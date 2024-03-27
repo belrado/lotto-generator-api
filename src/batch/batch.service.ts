@@ -25,7 +25,7 @@ export class BatchService {
   private readonly logger = new Logger(BatchService.name)
 
   @Cron('0 */40 20-21 * * 6')
-  async handleCron() {
+  async handleLottoCron() {
     const dbLastData: WinNumberEntity[] = await this.winNumberRepository.find({
       select: { drwNo: true },
       order: { drwNo: 'desc' },
@@ -222,11 +222,11 @@ export class BatchService {
     secondStore.push(...this.storeDataInit(second, $, ['continue', 'name', 'address']))
 
     const pageListNum = $('#page_box > a').length
-
+    console.log('pageListNum', pageListNum)
     await browser.close()
 
     if (pageListNum > 1) {
-      for (let i = 1; i <= pageListNum; i++) {
+      for (let i = 2; i <= pageListNum; i++) {
         const more = await this.secondStoreMoreCrawling(drwNo, i.toString())
         secondStore.push(...more)
       }
@@ -242,6 +242,7 @@ export class BatchService {
       latitude: '',
       longitude: ''
     }))
+
     const clearSecondStore = secondStore.filter((v: StoreRowStatus) => v.name !== '')
     const newSecond = clearSecondStore.map((v: StoreRowStatus) => ({
       drwNo: drwNo,
@@ -280,5 +281,17 @@ export class BatchService {
     await browser.close()
 
     return secondStore
+  }
+
+  async lottoStoreSetting(drwNo: string) {
+    const winStore = await this.storeCrawling(drwNo)
+    if (winStore.length > 0) {
+      const queryRunner = this.dataSource.createQueryRunner()
+      await queryRunner.connect()
+      await queryRunner.startTransaction()
+      await this.insertWinStore(winStore, queryRunner)
+      await queryRunner.commitTransaction()
+      await queryRunner.release()
+    }
   }
 }
