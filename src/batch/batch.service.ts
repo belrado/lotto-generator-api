@@ -66,7 +66,7 @@ export class BatchService {
       .execute()
   }
 
-  private async inertWinnerInfo(winNumberInfo, queryRunner) {
+  private async insertWinnerInfo(winNumberInfo, queryRunner) {
     return await this.winnerInfoRepository
       .createQueryBuilder('winnerInfo', queryRunner)
       .insert()
@@ -172,7 +172,7 @@ export class BatchService {
 
         try {
           await this.insertInNumber(winNumber, queryRunner)
-          await this.inertWinnerInfo(winNumberInfo, queryRunner)
+          await this.insertWinnerInfo(winNumberInfo, queryRunner)
           if (winStore.length > 0) {
             await this.insertWinStore(winStore, queryRunner)
           }
